@@ -1,3 +1,4 @@
+import json
 import os
 
 try:
@@ -5,12 +6,26 @@ try:
 except ImportError:
     OpenAI = None
 
+# opencode CLI 登录后写凭证的文件（opencode auth login 一次即可，无需手动拷 Key）
+_CLI_AUTH_FILE = os.path.expanduser("~/.local/share/opencode/auth.json")
+
+
+def _read_cli_key():
+    try:
+        with open(_CLI_AUTH_FILE, encoding="utf-8") as f:
+            data = json.load(f)
+        entry = data.get("opencode") or {}
+        return entry.get("key") or ""
+    except (OSError, ValueError):
+        return ""
+
 
 class OpenCodeService:
     """opencode Zen 免费模型（OpenAI 兼容接口），接口与 LocalLLMService 一致。
 
-    Key 获取：打开 https://opencode.ai/auth 登录 -> 复制 API Key ->
-    export OPENCODE_API_KEY="你的key"（或写入项目根目录 .env 文件）。
+    Key 获取（二选一）：
+    1. 终端跑一次 opencode auth login（选 OpenCode Zen，浏览器点确认），本服务自动复用 CLI 存的凭证；
+    2. 或 export OPENCODE_API_KEY="你的key"（https://opencode.ai/auth 后台复制）。
     """
 
     DEFAULT_MODEL = "muse-spark-1.3-contributor-free"
@@ -19,11 +34,11 @@ class OpenCodeService:
     def __init__(self, model=None, api_key=None, base_url=None):
         if OpenAI is None:
             raise RuntimeError("缺少 openai 包，请先 pip install openai")
-        self.api_key = api_key or os.getenv("OPENCODE_API_KEY", "")
+        self.api_key = api_key or os.getenv("OPENCODE_API_KEY", "") or _read_cli_key()
         if not self.api_key:
             raise RuntimeError(
-                "未找到 OPENCODE_API_KEY。去 https://opencode.ai/auth 登录复制 Key，"
-                "然后 export OPENCODE_API_KEY='你的key' 再启动。"
+                "未找到登录凭证。请在终端跑一次 opencode auth login（选 OpenCode Zen，"
+                "浏览器点确认），或 export OPENCODE_API_KEY='你的key' 后再启动。"
             )
         self.model = model or os.getenv("OPENCODE_MODEL", self.DEFAULT_MODEL)
         self.client = OpenAI(

@@ -25,3 +25,6 @@ long_term_memory.json
 .venv/
 __pycache__/
 *.pyc
+*.db
+*.db-shm
+*.db-wal

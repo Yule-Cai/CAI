@@ -71,7 +71,20 @@ class MainWindow(QWidget):
 
     def showEvent(self, event):
         super().showEvent(event)
-        WindowEffect.pin_on_top_mac(self)
+        # 原生窗口在 show 当刻可能还没注册到 NSApp，延迟一秒再钉
+        QTimer.singleShot(1000, self._pin_once)
+        # 定时巡检：别的 App 抢焦点导致层级丢失时钉回去
+        if not hasattr(self, "_pin_timer"):
+            self._pin_timer = QTimer(self)
+            self._pin_timer.timeout.connect(lambda: WindowEffect.pin_on_top_mac(self))
+            self._pin_timer.start(10000)
+
+    def _pin_once(self):
+        level = WindowEffect.pin_on_top_mac(self)
+        if level is not None:
+            print(f"[Window] Mac 置顶生效，层级={level}")
+        else:
+            print("[Window] Mac 置顶未命中原生窗口，等待巡检重试")
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
@@ -136,12 +149,14 @@ class MainWindow(QWidget):
         self.resize(100, 100)
         self.avatar.move(10, 10)
         self.update()
+        WindowEffect.pin_on_top_mac(self)
 
     def switch_to_normal(self):
         self.is_mini_mode = False
         self.resize(400, 720)
         self.content_container.show()
         WindowEffect.set_acrylic(int(self.winId()))
+        WindowEffect.pin_on_top_mac(self)
         self.input.setFocus()
         self.update()
 

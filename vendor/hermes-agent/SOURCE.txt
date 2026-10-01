@@ -1,0 +1,5 @@
+来源：Nous Research Hermes Agent（MIT License，见本目录 LICENSE）
+本地路径：~/.hermes/hermes-agent（2026-10-01 复制）
+用途：Leo 二次开发底座（对话循环 / 工具 / 记忆 / 技能）。
+裁剪：未复制 gateway/（消息平台）、apps/（桌面端）、web/、evals/、docker/、venv/。
+改动记录见 git log。

@@ -27,20 +27,24 @@ class WindowEffect:
 
     @staticmethod
     def pin_on_top_mac(widget):
-        """Mac 置顶：浮动层级 + 跟随所有桌面 + 全屏 App 上方也可见。"""
+        """Mac 置顶：浮动层级 + 跟随所有桌面 + 全屏 App 上方也可见。返回层级数字，失败返回 None。"""
         import sys
         if sys.platform != "darwin":
-            return
+            return None
         try:
             from AppKit import NSFloatingWindowLevel
             import objc
-            wid = int(widget.winId())
-            for w in objc.lookUpClass("NSApplication").sharedApplication().windows():
-                if w.windowNumber() == wid:
-                    w.setLevel_(NSFloatingWindowLevel)
-                    # CanJoinAllSpaces(1) | FullScreenAuxiliary(256)
-                    w.setCollectionBehavior_(1 | 256)
-                    w.setHidesOnDeactivate_(False)
-                    break
+            from ctypes import c_void_p
+            # winId() 是 NSView 指针（不是 windowNumber），先取 view 再拿 window
+            view = objc.objc_object(c_void_p=int(widget.winId()))
+            window = view.window()
+            if window is None:
+                return None
+            window.setLevel_(NSFloatingWindowLevel)
+            # CanJoinAllSpaces(1) | FullScreenAuxiliary(256)
+            window.setCollectionBehavior_(1 | 256)
+            window.setHidesOnDeactivate_(False)
+            return int(window.level())
         except Exception as e:
             print(f"[WindowEffect] Mac 置顶失败（不影响使用）: {e}")
+            return None

@@ -33,7 +33,13 @@ class SherpaTTSService(TTSBase):
         try:
             print(f"[Sherpa] 加载 Kokoro 中英混读模型 (sid={sid})")
             import glob
-            lexicons = sorted(glob.glob(os.path.join(os.path.dirname(f["model"]), "lexicon-*.txt")))
+            kokoro_root = os.path.dirname(f["model"])
+            lexicons = sorted(glob.glob(os.path.join(kokoro_root, "lexicon-*.txt")))
+            rule_fsts = []
+            for name in ("phone-zh.fst", "date-zh.fst", "number-zh.fst"):
+                p = os.path.join(kokoro_root, name)
+                if os.path.exists(p):
+                    rule_fsts.append(p)
             config = sherpa_onnx.OfflineTtsConfig(
                 model=sherpa_onnx.OfflineTtsModelConfig(
                     kokoro=sherpa_onnx.OfflineTtsKokoroModelConfig(
@@ -47,6 +53,7 @@ class SherpaTTSService(TTSBase):
                     num_threads=2,
                     debug=False,
                 ),
+                rule_fsts=",".join(rule_fsts) if rule_fsts else "",
                 max_num_sentences=1,
             )
             if not config.validate():

@@ -24,11 +24,18 @@ class LMStudioService(LLMBase):
         print(f"[LLM] LM Studio ready. Server: {self.base_url} Model: {self.model_id}")
 
     def _fetch_current_model(self):
-        """向 LM Studio 询问当前加载了什么模型"""
+        """优先用配置指定的模型（在 Server 列表里才有效），否则取第一个已加载的"""
+        try:
+            from config.settings import MODEL_NAME as preferred
+        except ImportError:
+            preferred = ""
         try:
             models = self.client.models.list()
-            if models.data:
-                return models.data[0].id
+            ids = [m.id for m in models.data] if models.data else []
+            if preferred and preferred in ids:
+                return preferred
+            if ids:
+                return ids[0]
         except Exception as e:
             print(f"[LLM] LM Studio 未响应 {self.base_url}：{e}")
         return "local-model"

@@ -18,14 +18,17 @@ class SherpaASRService:
             print("❌ [ASR] 错误：未找到 asr_model 文件夹！请检查路径。")
             return
             
-        # 自动搜索 .onnx 模型文件
+        # 自动搜索 .onnx 模型文件（优先 model.onnx，即 Paraformer）
         model_file = None
         tokens_file = os.path.join(self.asr_dir, "tokens.txt")
-        
-        for f in os.listdir(self.asr_dir):
+        candidates = sorted(os.listdir(self.asr_dir))
+        for f in candidates:
             if f.endswith(".onnx"):
-                model_file = os.path.join(self.asr_dir, f)
-                break
+                if f == "model.onnx":
+                    model_file = os.path.join(self.asr_dir, f)
+                    break
+                if model_file is None:
+                    model_file = os.path.join(self.asr_dir, f)
                 
         if not model_file or not os.path.exists(tokens_file):
             print("❌ [ASR] 错误：asr_model 文件夹中缺少 .onnx 模型或 tokens.txt 字典文件！")

@@ -12,8 +12,8 @@ OPENCODE_BASE_URL = os.getenv("OPENCODE_BASE_URL", "https://opencode.ai/zen/v1")
 # LM Studio 的默认地址（Mac 本地默认 localhost，可用环境变量 LM_STUDIO_URL 覆盖）
 LM_STUDIO_URL = os.getenv("LM_STUDIO_URL", "http://localhost:1234/v1")
 
-# 你的模型名称 (在 LM Studio 加载后，这里填什么其实不影响，但保持清晰比较好)
-MODEL_NAME = "gpt-oss-20b"
+# 指定的模型（LM Studio 里已加载才有效，否则自动用第一个；可用 MODEL_NAME 环境变量覆盖）
+MODEL_NAME = os.getenv("MODEL_NAME", "qwen/qwen3-1.7b")
 
 # CAI 的人设 (System Prompt)
 # 以后可以在这里修改人设，不用改代码

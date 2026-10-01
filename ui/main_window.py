@@ -87,8 +87,12 @@ class MainWindow(QWidget):
         super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event):
+        # 悬浮球双向切换：迷你模式下点任意处展开；完整模式下点球体缩回
         if event.button() == Qt.LeftButton and not self.dragging:
-            if self.is_mini_mode: self.switch_to_normal()
+            pos = event.position().toPoint()
+            if self.is_mini_mode or self.avatar.geometry().contains(pos):
+                if self.is_mini_mode: self.switch_to_normal()
+                else: self.switch_to_mini()
         self.dragging = False
         super().mouseReleaseEvent(event)
 

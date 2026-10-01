@@ -19,3 +19,5 @@ __pycache__/
 chat_history.json
 user_profile.json
 long_term_memory.json
+# 本地密钥（绝不提交）
+.env

@@ -24,7 +24,7 @@ from PySide6.QtGui import (QPainter, QColor, QTextCursor, QPainterPath, QPalette
 # 🟢 导入业务模块
 # =========================================================================
 from services.sherpa_service import SherpaTTSService   
-from services.local_llm_service import LocalLLMService 
+from services.opencode_service import create_llm_service 
 from services.sherpa_asr_service import SherpaASRService 
 from core.cai_brain import CAIBrain
 from core.scheduler import BioClock
@@ -472,7 +472,7 @@ class MainWindow(QWidget):
 
     def init_backend(self):
         try:
-            self.llm = LocalLLMService()
+            self.llm = create_llm_service()
             self.tts = SherpaTTSService() 
             self.asr = SherpaASRService()
             self.brain = CAIBrain(self.llm); self.bio_clock = BioClock(self.safe_trigger)

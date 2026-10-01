@@ -1,4 +1,13 @@
 # CAI 的全局配置
+import os
+
+# LLM 后端切换：local=本地llama（默认），cloud=opencode免费云模型，auto=有Key用云否则本地
+# 用法：export CAI_LLM=cloud
+LLM_PROVIDER = os.getenv("CAI_LLM", "local")
+
+# opencode Zen 免费模型配置（Key 从环境变量 OPENCODE_API_KEY 读取，见 .env.example）
+OPENCODE_MODEL = os.getenv("OPENCODE_MODEL", "muse-spark-1.3-contributor-free")
+OPENCODE_BASE_URL = os.getenv("OPENCODE_BASE_URL", "https://opencode.ai/zen/v1")
 
 # LM Studio 的默认地址
 LM_STUDIO_URL = "http://26.93.181.215:1234/v1"

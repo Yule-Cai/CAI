@@ -1,4 +1,4 @@
-from services.lm_studio_service import LMStudioService
+from services.opencode_service import create_llm_service
 from services.sherpa_service import SherpaTTSService 
 from services.sherpa_asr_service import SherpaASRService 
 from core.cai_brain import CAIBrain
@@ -13,7 +13,7 @@ def main():
     
     # 1. 初始化
     try:
-        llm_service = LMStudioService()
+        llm_service = create_llm_service()
         tts_service = SherpaTTSService() 
         asr_service = SherpaASRService() 
         cai = CAIBrain(llm_service)
@@ -86,7 +86,7 @@ def process_response(user_input, cai_brain, tts):
 
     # 思考
     print("(思考中...)")
-    reply = cai_brain.chat(user_input)
+    reply = "".join(cai_brain.chat_stream(user_input))
     print(f"CAI: {reply}")
     
     # 朗读

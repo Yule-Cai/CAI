@@ -1,0 +1,21 @@
+# 大模型文件 - Windows第二版本地有855M, GitHub不存大二进制
+*.onnx
+*.bin
+*.pt
+*.pth
+*.ckpt
+models/
+piper_engine/
+asr_model/*.onnx
+tts_model/*.onnx
+新建文件夹/
+memory/screenshots/
+*.pyc
+__pycache__/
+*.log
+*.png
+.DS_Store
+# 本地运行缓存
+chat_history.json
+user_profile.json
+long_term_memory.json

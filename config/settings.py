@@ -13,7 +13,7 @@ OPENCODE_BASE_URL = os.getenv("OPENCODE_BASE_URL", "https://opencode.ai/zen/v1")
 LM_STUDIO_URL = os.getenv("LM_STUDIO_URL", "http://localhost:1234/v1")
 
 # 指定的模型（LM Studio 里已加载才有效，否则自动用第一个；可用 MODEL_NAME 环境变量覆盖）
-MODEL_NAME = os.getenv("MODEL_NAME", "qwen/qwen3-1.7b")
+MODEL_NAME = os.getenv("MODEL_NAME", "lfm2.5-2.6b-heretic-uncensored")
 
 # CAI 的人设 (System Prompt)
 # 以后可以在这里修改人设，不用改代码

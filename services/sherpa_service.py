@@ -1,9 +1,33 @@
 import sherpa_onnx
 import os
+import re
 import sounddevice as sd
 import numpy as np
 
 from interfaces.tts_base import TTSBase
+
+_EMOJI_RE = re.compile(
+    "[\U0001F000-\U0001FAFF\u2600-\u27BF\u2B00-\u2BFF\uFE0F"
+    "\U0001F300-\U0001F6FF\u2190-\u21FF\u2300-\u23FF\U0001F900-\U0001F9FF"
+    "\U0001FA70-\U0001FAFF\u200D\u2640\u2642\u25A0-\u25FF]",
+    flags=re.UNICODE,
+)
+
+
+def clean_tts_text(text):
+    """TTS 前清洗：状态标签、markdown、emoji、链接都不该被读出来。"""
+    if not text:
+        return ""
+    text = re.sub(r"【[^】]*】", "", text)        # 【思考】整段去
+    text = re.sub(r"\[[^\]]*\]", "", text)        # [思考]整段去
+    text = re.sub(r"!\[[^\]]*\]\([^\)]+\)", "", text)  # 图片
+    text = re.sub(r"\[([^\]]+)\]\([^\)]+\)", r"\1", text)  # 链接留字去址
+    text = re.sub(r"https?://\S+", "链接", text)
+    text = re.sub(r"[\\*`#_~>|=\-]{2,}", "", text)
+    text = re.sub(r"[*`#_~>|]", "", text)
+    text = _EMOJI_RE.sub("", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    return text
 
 
 class SherpaTTSService(TTSBase):
@@ -121,6 +145,7 @@ class SherpaTTSService(TTSBase):
             self.tts = None
 
     def generate_raw_audio(self, text, speed=1.0):
+        text = clean_tts_text(text)
         if not self.tts or not text: return None, 0
         try:
             # 生成

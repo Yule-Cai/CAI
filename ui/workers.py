@@ -5,6 +5,8 @@ import threading
 import sounddevice as sd
 from PySide6.QtCore import QRunnable, QObject, Signal, Slot, QThread
 
+from services.sherpa_service import clean_tts_text
+
 
 class StreamWorkerSignals(QObject):
     new_thinking = Signal(str); new_content = Signal(str); new_sentence = Signal(str)
@@ -28,7 +30,6 @@ class StreamWorker(QRunnable):
             gen = self.brain_func(self.text)
 
             sentence_enders = "。！？!?\n"
-            sub_sentence_enders = "，,；;：:…—"
 
             for t in gen:
                 if self.stop_event.is_set(): self.signals.status_update.emit("🛑 Interrupted"); break
@@ -39,35 +40,33 @@ class StreamWorker(QRunnable):
                 if in_thinking:
                     self.signals.new_thinking.emit(t)
                 else:
-                    emo = re.search(r'\[(.*?)\]', t)
+                    # 表情标签（半角[]/全角【】都认）：给小球换色，不送 TTS
+                    emo = re.search(r'[\[【](.*?)[\]】】]', t)
                     if emo:
                         self.signals.emotion_detected.emit(emo.group(0))
                         t = t.replace(emo.group(0), "")
+                    if not t.strip():
+                        continue
 
                     self.signals.new_content.emit(t)
-                    tts_buffer += t
+                    tts_buffer += clean_tts_text(t)
 
+                    # 整句才切：块大、调用少，不卡顿；超长兜底 80 字一切
                     should_flush = False
                     if any(x in tts_buffer for x in sentence_enders): should_flush = True
-                    elif any(x in tts_buffer for x in sub_sentence_enders) and len(tts_buffer) > 10: should_flush = True
-                    elif len(tts_buffer) > 40: should_flush = True
+                    elif len(tts_buffer) > 80: should_flush = True
 
                     if should_flush:
                         text_to_speak = tts_buffer.strip()
-                        text_to_speak = re.sub(r'[\*`#\-_~]', '', text_to_speak)
-                        text_to_speak = re.sub(r'[^\w\s,。.!?;:，。！？；：]', '', text_to_speak)
-
+                        tts_buffer = ""
                         if text_to_speak:
                             samples, rate = self.tts_service.generate_raw_audio(text_to_speak)
                             if samples is not None:
                                 self.audio_player.put_audio(samples, rate)
 
-                        tts_buffer = ""
-
             if not self.stop_event.is_set() and tts_buffer.strip():
                 if not in_thinking:
-                    text_to_speak = re.sub(r'[\*`#\-_~]', '', tts_buffer.strip())
-                    samples, rate = self.tts_service.generate_raw_audio(text_to_speak)
+                    samples, rate = self.tts_service.generate_raw_audio(tts_buffer.strip())
                     if samples is not None:
                         self.audio_player.put_audio(samples, rate)
 

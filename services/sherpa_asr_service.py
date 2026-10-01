@@ -1,6 +1,9 @@
 import sherpa_onnx
 import os
 
+import numpy as np
+import sounddevice as sd
+
 class SherpaASRService:
     def __init__(self):
         self.recognizer = None
@@ -51,3 +54,19 @@ class SherpaASRService:
         if self.recognizer:
             return self.recognizer.create_stream()
         return None
+
+    def listen(self, duration=8):
+        """阻塞式录音识别（供 main.py 命令行模式用，UI 模式走 create_stream 按住说）"""
+        stream = self.create_stream()
+        if stream is None:
+            return ""
+        try:
+            print(f"[ASR] 🎙️ 录音中（{duration}秒，说完自动识别）...")
+            audio = sd.rec(int(duration * 16000), samplerate=16000, channels=1, dtype="float32")
+            sd.wait()
+            stream.accept_waveform(16000, audio.reshape(-1))
+            self.recognizer.decode_stream(stream)
+            return stream.result.text.strip()
+        except Exception as e:
+            print(f"[ASR Listen Error] {e}")
+            return ""

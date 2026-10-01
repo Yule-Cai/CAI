@@ -12,3 +12,10 @@ class LLMBase(ABC):
         输入对话历史 (messages)，返回 AI 的回复字符串。
         """
         pass
+
+    @abstractmethod
+    def chat_stream(self, messages: list):
+        """
+        流式对话接口，逐块 yield 回复文本（供 UI 打字机效果 + 边说边播）。
+        """
+        pass

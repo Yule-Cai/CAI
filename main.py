@@ -3,7 +3,14 @@ from services.sherpa_service import SherpaTTSService
 from services.sherpa_asr_service import SherpaASRService 
 from core.cai_brain import CAIBrain
 import sys
-import keyboard # <--- [新] 引入键盘库
+import os
+if os.name == "nt":
+    try:
+        import keyboard  # Windows 全局按键监听；Mac 无 keyboard 时自动降级纯打字模式
+    except ImportError:
+        keyboard = None
+else:
+    keyboard = None
 import time
 
 def main():
@@ -28,6 +35,17 @@ def main():
     print("----------------------------------------")
     
     tts_service.speak("系统就绪，你可以按空格键跟我说话，或者按 T 键打字。")
+
+    if keyboard is None:
+        print("\n⚠️ keyboard 库不可用，已进入纯打字模式（回车发送，输入 退出 离开）。")
+        while True:
+            try:
+                user_text = input("你: ").strip()
+                if user_text:
+                    process_response(user_text, cai, tts_service)
+            except (KeyboardInterrupt, EOFError):
+                break
+        return
 
     while True:
         try:

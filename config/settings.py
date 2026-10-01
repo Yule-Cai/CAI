@@ -9,8 +9,8 @@ LLM_PROVIDER = os.getenv("CAI_LLM", "local")
 OPENCODE_MODEL = os.getenv("OPENCODE_MODEL", "muse-spark-1.3-contributor-free")
 OPENCODE_BASE_URL = os.getenv("OPENCODE_BASE_URL", "https://opencode.ai/zen/v1")
 
-# LM Studio 的默认地址
-LM_STUDIO_URL = "http://26.93.181.215:1234/v1"
+# LM Studio 的默认地址（Mac 本地默认 localhost，可用环境变量 LM_STUDIO_URL 覆盖）
+LM_STUDIO_URL = os.getenv("LM_STUDIO_URL", "http://localhost:1234/v1")
 
 # 你的模型名称 (在 LM Studio 加载后，这里填什么其实不影响，但保持清晰比较好)
 MODEL_NAME = "gpt-oss-20b"

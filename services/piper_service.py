@@ -7,7 +7,9 @@ import re
 class PiperService:
     def __init__(self):
         self.base_dir = os.path.dirname(os.path.dirname(__file__))
-        self.piper_exe = os.path.join(self.base_dir, "piper_engine", "piper.exe")
+        # Windows 用 piper.exe，Mac/Linux 用 piper（去 piper 官网下对应平台二进制放入 piper_engine/）
+        exe_name = "piper.exe" if os.name == "nt" else "piper"
+        self.piper_exe = os.path.join(self.base_dir, "piper_engine", exe_name)
         self.model_path = os.path.join(self.base_dir, "models", "piper", "zh_CN-huayan-medium.onnx")
         
         self.valid = True

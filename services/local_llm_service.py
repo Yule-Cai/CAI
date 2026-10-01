@@ -2,7 +2,10 @@ import os
 import sys
 from llama_cpp import Llama
 
-class LocalLLMService:
+from interfaces.llm_base import LLMBase
+
+
+class LocalLLMService(LLMBase):
     _instance = None
 
     def __new__(cls):
@@ -60,3 +63,6 @@ class LocalLLMService:
         except Exception as e:
             print(f"[LLM Error] 生成中断: {e}")
             yield f"[Error: {e}]"
+
+    def get_response(self, messages):
+        return "".join(self.chat_stream(messages))

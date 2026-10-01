@@ -6,6 +6,8 @@ try:
 except ImportError:
     OpenAI = None
 
+from interfaces.llm_base import LLMBase
+
 # opencode CLI 登录后写凭证的文件（opencode auth login 一次即可，无需手动拷 Key）
 _CLI_AUTH_FILE = os.path.expanduser("~/.local/share/opencode/auth.json")
 
@@ -20,7 +22,7 @@ def _read_cli_key():
         return ""
 
 
-class OpenCodeService:
+class OpenCodeService(LLMBase):
     """opencode Zen 免费模型（OpenAI 兼容接口），接口与 LocalLLMService 一致。
 
     Key 获取（二选一）：
@@ -70,22 +72,31 @@ class OpenCodeService:
 
 
 def create_llm_service(prefer=None):
-    """按 CAI_LLM 选择后端：cloud=云免费模型，local=本地llama，auto=有Key就用云否则本地。
+    """按 CAI_LLM 选择后端：
+    lmstudio=本地LM Studio（默认，Mac主力），local=llama_cpp文件模型，
+    cloud=opencode免费云模型，auto=有Key用云否则LM Studio。
 
-    默认 local，保持原有行为不变。
+    默认 lmstudio，保持开箱可用。
     """
     try:
         from dotenv import load_dotenv
         load_dotenv()
     except ImportError:
         pass
-    prefer = (prefer or os.getenv("CAI_LLM", "local")).lower()
+    prefer = (prefer or os.getenv("CAI_LLM", "lmstudio")).lower()
     if prefer == "cloud":
         return OpenCodeService()
-    if prefer == "auto" and os.getenv("OPENCODE_API_KEY"):
+    if prefer == "local":
         try:
-            return OpenCodeService()
-        except Exception as e:
-            print(f"[LLM] 云模型不可用，回退本地: {e}")
-    from services.local_llm_service import LocalLLMService
-    return LocalLLMService()
+            from services.local_llm_service import LocalLLMService
+        except ImportError:
+            raise RuntimeError("本地llama需安装 llama-cpp-python 且 models/model.gguf 就绪，Mac 建议改用 CAI_LLM=lmstudio")
+        return LocalLLMService()
+    if prefer == "auto":
+        if os.getenv("OPENCODE_API_KEY") or _read_cli_key():
+            try:
+                return OpenCodeService()
+            except Exception as e:
+                print(f"[LLM] 云模型不可用，回退 LM Studio: {e}")
+    from services.lm_studio_service import LMStudioService
+    return LMStudioService()

@@ -3,7 +3,10 @@ import os
 import sounddevice as sd
 import numpy as np
 
-class SherpaTTSService:
+from interfaces.tts_base import TTSBase
+
+
+class SherpaTTSService(TTSBase):
     def __init__(self):
         self.base_dir = os.path.dirname(os.path.dirname(__file__))
         
@@ -75,3 +78,14 @@ class SherpaTTSService:
         except Exception as e:
             print(f"[Sherpa Generate Error] {e}")
             return None, 0
+
+    def speak(self, text, speed=1.0):
+        """阻塞式朗读（供 main.py 命令行模式用，UI 模式走 generate_raw_audio 流播）"""
+        samples, rate = self.generate_raw_audio(text, speed)
+        if samples is None:
+            return
+        try:
+            sd.play(np.array(samples, dtype=np.float32), rate)
+            sd.wait()
+        except Exception as e:
+            print(f"[Sherpa Speak Error] {e}")

@@ -1,2 +1,12 @@
+# CAI 运行依赖（Mac: python3 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt）
+# Mac 音频另需：brew install portaudio
 openai>=1.0
 python-dotenv
+schedule
+numpy
+sounddevice
+sherpa-onnx
+PySide6
+# --- 以下仅 Windows ---
+# keyboard       # Windows 全局热键（0.13.5 在新 Mac 上 import 即崩溃，Mac 不要装）
+# llama-cpp-python  # 仅本地 llama 文件模型模式，Mac/LMStudio 模式不需要

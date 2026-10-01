@@ -10,8 +10,11 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(BASE_DIR, "models")
 TTS_PATH = os.path.join(BASE_DIR, "tts_model")
 
-# 3. 你的 llama_cpp 库路径 (保持之前查到的)
-LLAMA_LIB_PATH = r"C:\Users\caiyule\AppData\Roaming\Python\Python313\site-packages\llama_cpp"
+# 3. llama_cpp 库路径（仅 Windows 本地 llama 模式需要，Mac/LMStudio 模式可忽略）
+if os.name == "nt":
+    LLAMA_LIB_PATH = r"C:\Users\caiyule\AppData\Roaming\Python\Python313\site-packages\llama_cpp"
+else:
+    LLAMA_LIB_PATH = None
 
 APP_NAME = "AI_Companion"
 ENTRY_POINT = "ui_module.py"
@@ -30,19 +33,20 @@ if not os.path.exists(TTS_PATH):
     print("请把 tts_model 文件夹放到和 build_exe.py 同一级目录！")
     sys.exit(1)
 
-if not os.path.exists(LLAMA_LIB_PATH):
+if LLAMA_LIB_PATH and not os.path.exists(LLAMA_LIB_PATH):
     print(f"❌ 严重错误：无法找到 llama_cpp 库: {LLAMA_LIB_PATH}")
     sys.exit(1)
 
 print("✅ 所有资源已就绪，开始准备搬运...")
 
-# 🔴 2. 构造数据指令 (源绝对路径;目标相对路径)
-# 意思是：把 C:\...\models 复制到 exe内部的 models/ 文件夹下
+# 🔴 2. 构造数据指令（Windows 用 ; 分隔，Mac/Linux 用 : 分隔）
+sep = ";" if os.name == "nt" else ":"
 datas_to_add = [
-    f'{LLAMA_LIB_PATH};llama_cpp', 
-    f'{MODEL_PATH};models',
-    f'{TTS_PATH};tts_model'
+    f'{MODEL_PATH}{sep}models',
+    f'{TTS_PATH}{sep}tts_model',
 ]
+if LLAMA_LIB_PATH:
+    datas_to_add.append(f'{LLAMA_LIB_PATH}{sep}llama_cpp')
 
 # 转换参数
 add_data_args = []
@@ -64,14 +68,17 @@ args = [
     *add_data_args,
     
     # 强制收集依赖
-    '--collect-all=llama_cpp',
-    
+    *(['--collect-all=llama_cpp'] if LLAMA_LIB_PATH else []),
+
     # 隐藏导入
     '--hidden-import=services',
+    '--hidden-import=services.lm_studio_service',
     '--hidden-import=services.local_llm_service',
+    '--hidden-import=services.opencode_service',
     '--hidden-import=services.sherpa_service',
+    '--hidden-import=services.sherpa_asr_service',
     '--hidden-import=core.cai_brain',
-    '--hidden-import=llama_cpp',
+    '--hidden-import=ui.main_window',
     '--hidden-import=sherpa_onnx',
     '--hidden-import=sounddevice',
 ]

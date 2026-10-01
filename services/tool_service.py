@@ -67,12 +67,22 @@ class ToolService:
 
 def _web_search(text):
     t = text.lower()
-    if "搜索" in t or "查一下" in t:
-        keyword = t.replace("搜索", "").replace("查一下", "").replace("帮我", "").strip()
-        if not keyword:
+    for kw in ("搜索", "查一下", "查找", "找一下", "帮我找"):
+        if kw in t:
+            keyword = t
+            for k in ("搜索", "查一下", "查找", "找一下", "帮我找", "帮我", "请"):
+                keyword = keyword.replace(k, "")
+            keyword = keyword.strip(" ，,：:！!。")
+            if len(keyword) >= 2:
+                webbrowser.open(f"https://www.baidu.com/s?wd={keyword}")
+                return f"已为你搜索：{keyword}"
             return None
-        webbrowser.open(f"https://www.baidu.com/s?wd={keyword}")
-        return f"已为你搜索：{keyword}"
+    # 找论文/找资料类：找 + 明确的内容词才触发，避免“去找他”误伤
+    if "找" in t and any(w in t for w in ("论文", "文献", "资料", "教程", "篇", "视频", "新闻", "天气")):
+        keyword = t.replace("帮我", "").replace("请", "").replace("找", "").strip(" ，,：:！!。")
+        if len(keyword) >= 2:
+            webbrowser.open(f"https://www.baidu.com/s?wd={keyword}")
+            return f"已为你搜索：{keyword}"
     return None
 
 

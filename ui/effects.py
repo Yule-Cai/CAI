@@ -24,3 +24,23 @@ class WindowEffect:
             DWMWA_USE_IMMERSIVE_DARK_MODE = 20
             ctypes.windll.dwmapi.DwmSetWindowAttribute(HWND(hwnd), DWORD(DWMWA_USE_IMMERSIVE_DARK_MODE), byref(c_true), ctypes.sizeof(c_true))
         except: pass
+
+    @staticmethod
+    def pin_on_top_mac(widget):
+        """Mac 置顶：浮动层级 + 跟随所有桌面 + 全屏 App 上方也可见。"""
+        import sys
+        if sys.platform != "darwin":
+            return
+        try:
+            from AppKit import NSFloatingWindowLevel
+            import objc
+            wid = int(widget.winId())
+            for w in objc.lookUpClass("NSApplication").sharedApplication().windows():
+                if w.windowNumber() == wid:
+                    w.setLevel_(NSFloatingWindowLevel)
+                    # CanJoinAllSpaces(1) | FullScreenAuxiliary(256)
+                    w.setCollectionBehavior_(1 | 256)
+                    w.setHidesOnDeactivate_(False)
+                    break
+        except Exception as e:
+            print(f"[WindowEffect] Mac 置顶失败（不影响使用）: {e}")

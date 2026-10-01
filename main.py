@@ -15,7 +15,7 @@ import time
 
 def main():
     print("========================================")
-    print("   CAI: 混合交互版 (Hybrid Mode)   ")
+    print("   Leo: 混合交互版 (Hybrid Mode)   ")
     print("========================================")
     
     # 1. 初始化
@@ -98,14 +98,14 @@ def process_response(user_input, cai_brain, tts):
     print(f"你: {user_input}")
     
     if "退出" in user_input:
-        print("CAI: 再见。")
+        print("Leo: 再见。")
         tts.speak("再见。")
         sys.exit(0)
 
     # 思考
     print("(思考中...)")
     reply = "".join(cai_brain.chat_stream(user_input))
-    print(f"CAI: {reply}")
+    print(f"Leo: {reply}")
     
     # 朗读
     tts.speak(reply)

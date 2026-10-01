@@ -7,17 +7,44 @@ import sounddevice as sd
 class SherpaASRService:
     def __init__(self):
         self.recognizer = None
+        self.backend = "none"
         self.base_dir = os.path.dirname(os.path.dirname(__file__))
         self.asr_dir = os.path.join(self.base_dir, "asr_model")
         
         print("========================================")
-        print("[ASR] 正在初始化 (Paraformer 模式)...")
+        print("[ASR] 正在初始化...")
         print(f"[ASR] 锁定模型文件夹: {self.asr_dir}")
-        
+
         if not os.path.exists(self.asr_dir):
             print("❌ [ASR] 错误：未找到 asr_model 文件夹！请检查路径。")
             return
-            
+
+        # 优先 SenseVoice 中英日韩粤（asr_model/sense-voice），没有则回退 Paraformer
+        sense_dir = os.path.join(self.asr_dir, "sense-voice")
+        sense_model = os.path.join(sense_dir, "model.int8.onnx")
+        sense_tokens = os.path.join(sense_dir, "tokens.txt")
+        if os.path.exists(sense_model) and os.path.exists(sense_tokens):
+            self._init_sense_voice(sense_model, sense_tokens)
+            return
+
+    def _init_sense_voice(self, model_file, tokens_file):
+        print("[ASR] 正在加载 SenseVoice 模型（中英日韩粤）...")
+        try:
+            self.recognizer = sherpa_onnx.OfflineRecognizer.from_sense_voice(
+                model=model_file,
+                tokens=tokens_file,
+                language="zh",
+                num_threads=2,
+                debug=False,
+            )
+            self.backend = "sense-voice"
+            print("[ASR] 🎉 听力系统初始化成功（SenseVoice）！")
+            print("========================================")
+        except Exception as e:
+            print(f"❌ [ASR] SenseVoice 初始化异常，回退 Paraformer: {e}")
+            self._init_paraformer()
+
+    def _init_paraformer(self):
         # 自动搜索 .onnx 模型文件（优先 model.onnx，即 Paraformer）
         model_file = None
         tokens_file = os.path.join(self.asr_dir, "tokens.txt")
@@ -47,6 +74,7 @@ class SherpaASRService:
                 feature_dim=80,
                 debug=False
             )
+            self.backend = "paraformer"
             print("[ASR] 🎉 听力系统初始化成功！")
             print("========================================")
         except Exception as e:

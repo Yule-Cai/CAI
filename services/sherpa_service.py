@@ -9,9 +9,58 @@ from interfaces.tts_base import TTSBase
 class SherpaTTSService(TTSBase):
     def __init__(self):
         self.base_dir = os.path.dirname(os.path.dirname(__file__))
-        
-        # 🟢 请确保这里指向你存放 Melo 模型的文件夹
-        # 你的日志显示文件夹名是 vits-zh-aishell3，虽然名字怪，但只要文件对就行
+        self.sid = 0
+        self.backend = "none"
+
+        # 优先 Kokoro 中英混读多音色（models/kokoro），没有则回退 Melo VITS
+        kokoro_dir = os.path.join(self.base_dir, "models", "kokoro")
+        kokoro_files = {
+            "model": os.path.join(kokoro_dir, "model.onnx"),
+            "voices": os.path.join(kokoro_dir, "voices.bin"),
+            "tokens": os.path.join(kokoro_dir, "tokens.txt"),
+            "data_dir": os.path.join(kokoro_dir, "espeak-ng-data"),
+        }
+        try:
+            from config.settings import KOKORO_SID
+        except ImportError:
+            KOKORO_SID = 58
+        if all(os.path.exists(p) for p in kokoro_files.values()):
+            self._init_kokoro(kokoro_files, KOKORO_SID)
+        else:
+            self._init_melo()
+
+    def _init_kokoro(self, f, sid):
+        try:
+            print(f"[Sherpa] 加载 Kokoro 中英混读模型 (sid={sid})")
+            import glob
+            lexicons = sorted(glob.glob(os.path.join(os.path.dirname(f["model"]), "lexicon-*.txt")))
+            config = sherpa_onnx.OfflineTtsConfig(
+                model=sherpa_onnx.OfflineTtsModelConfig(
+                    kokoro=sherpa_onnx.OfflineTtsKokoroModelConfig(
+                        model=f["model"],
+                        voices=f["voices"],
+                        tokens=f["tokens"],
+                        data_dir=f["data_dir"],
+                        lexicon=",".join(lexicons),
+                    ),
+                    provider="cpu",
+                    num_threads=2,
+                    debug=False,
+                ),
+                max_num_sentences=1,
+            )
+            if not config.validate():
+                print("❌ [Sherpa] Kokoro Config 校验失败，回退 Melo")
+                return self._init_melo()
+            self.tts = sherpa_onnx.OfflineTts(config)
+            self.sid = sid
+            self.backend = "kokoro"
+            print(f"✅ [Sherpa] Kokoro 就绪！采样率: {self.tts.sample_rate}")
+        except Exception as e:
+            print(f"❌ [Sherpa] Kokoro 初始化异常，回退 Melo: {e}")
+            self._init_melo()
+
+    def _init_melo(self):
         self.model_dir = os.path.join(self.base_dir, "models", "vits-zh-aishell3")
         
         # 自动搜索 .onnx 文件 (防止文件名对不上)
@@ -68,7 +117,7 @@ class SherpaTTSService(TTSBase):
         if not self.tts or not text: return None, 0
         try:
             # 生成
-            audio = self.tts.generate(text, sid=0, speed=speed)
+            audio = self.tts.generate(text, sid=self.sid, speed=speed)
             
             if len(audio.samples) == 0:
                 print(f"⚠️ [Sherpa] 生成为空 (Melo 可能还是没认出这些字): {text}")

@@ -69,6 +69,10 @@ class MainWindow(QWidget):
         if self.is_mini_mode: self.switch_to_mini()
         else: self.switch_to_normal()
 
+    def showEvent(self, event):
+        super().showEvent(event)
+        WindowEffect.pin_on_top_mac(self)
+
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
             self.dragging = False
@@ -158,7 +162,7 @@ class MainWindow(QWidget):
         hl = QHBoxLayout(header); hl.setContentsMargins(90, 10, 15, 10)
 
         title_box = QVBoxLayout(); title_box.setSpacing(2)
-        self.title_lbl = QLabel("CAI"); self.title_lbl.setObjectName("TitleLabel")
+        self.title_lbl = QLabel("Leo"); self.title_lbl.setObjectName("TitleLabel")
         self.status_lbl = QLabel("Online"); self.status_lbl.setObjectName("StatusLabel")
         title_box.addWidget(self.title_lbl); title_box.addWidget(self.status_lbl); hl.addLayout(title_box); hl.addStretch()
 
